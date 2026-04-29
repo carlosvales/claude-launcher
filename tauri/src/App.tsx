@@ -6,6 +6,7 @@ import { ProjectCard } from "./components/ProjectCard";
 import { SidePanel } from "./components/SidePanel";
 import { SettingsModal } from "./components/SettingsModal";
 import { HelpModal } from "./components/HelpModal";
+import { clsx } from "./utils";
 import type { Config, LaunchOptions, Project } from "./types";
 
 const DEFAULT_OPTIONS: LaunchOptions = {
@@ -16,6 +17,13 @@ const DEFAULT_OPTIONS: LaunchOptions = {
   effort: "max",
 };
 
+type StatusColor = "dim" | "accent" | "error";
+const STATUS_CLS: Record<StatusColor, string> = {
+  dim:    "text-dim",
+  accent: "text-accent",
+  error:  "text-red-500",
+};
+
 export default function App() {
   const [config, setConfig] = useState<Config | null>(null);
   const [configPath, setConfigPath] = useState("");
@@ -23,15 +31,14 @@ export default function App() {
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [options, setOptions] = useState<LaunchOptions>(DEFAULT_OPTIONS);
-  const [status, setStatus] = useState({
-    text: "Double click to launch • Enter to open • Esc to deselect",
-    color: "#71717a",
+  const [status, setStatus] = useState<{ text: string; color: StatusColor }>({
+    text: "Double click to launch · Enter to open · Esc to deselect",
+    color: "dim",
   });
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
-  // Initial load
   useEffect(() => {
     (async () => {
       try {
@@ -44,21 +51,14 @@ export default function App() {
         setProjects(list);
         if (cfg.lastProject) {
           const last = list.find((p) => p.name === cfg.lastProject);
-          if (last) {
-            setSelected(last.path);
-            applyProjectPrefs(cfg, last.name);
-          }
+          if (last) { setSelected(last.path); applyProjectPrefs(cfg, last.name); }
         }
-        // Onboarding: if no projects found, open Settings
         if (list.length === 0) {
           setSettingsOpen(true);
-          setStatus({
-            text: "No projects found. Pick your code folder in Settings.",
-            color: "#F8C471",
-          });
+          setStatus({ text: "No projects found. Pick your code folder in Settings.", color: "accent" });
         }
       } catch (err) {
-        setStatus({ text: `Error: ${err}`, color: "#ef4444" });
+        setStatus({ text: `Error: ${err}`, color: "error" });
       } finally {
         setLoading(false);
       }
@@ -66,29 +66,21 @@ export default function App() {
   }, []);
 
   function applyProjectPrefs(cfg: Config, name: string) {
-    const saved = cfg.projects[name];
-    setOptions(saved ?? cfg.defaultOptions);
+    setOptions(cfg.projects[name] ?? cfg.defaultOptions);
   }
 
-  // Keyboard shortcuts (only when no modal is open)
   useEffect(() => {
     function handler(e: KeyboardEvent) {
       if (settingsOpen || helpOpen) return;
-      if (e.key === "Enter" && selected) {
-        e.preventDefault();
-        launch();
-      } else if (e.key === "Escape") {
-        setSelected(null);
-        if (config) setOptions(config.defaultOptions);
-      }
+      if (e.key === "Enter" && selected) { e.preventDefault(); launch(); }
+      else if (e.key === "Escape") { setSelected(null); if (config) setOptions(config.defaultOptions); }
     }
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   });
 
   const filtered = useMemo(
-    () =>
-      projects.filter((p) => p.name.toLowerCase().includes(filter.toLowerCase())),
+    () => projects.filter((p) => p.name.toLowerCase().includes(filter.toLowerCase())),
     [projects, filter],
   );
 
@@ -106,54 +98,38 @@ export default function App() {
       const next: Config = {
         ...config,
         lastProject: selectedProject.name,
-        projects: {
-          ...config.projects,
-          [selectedProject.name]: { ...options },
-        },
+        projects: { ...config.projects, [selectedProject.name]: { ...options } },
       };
       setConfig(next);
       await api.saveConfig(next);
-      setStatus({
-        text: `Launched ${selectedProject.name} (${options.model})`,
-        color: "#4ECDC4",
-      });
+      setStatus({ text: `Launched ${selectedProject.name} · ${options.model}`, color: "accent" });
     } catch (err) {
-      setStatus({ text: `Launch error: ${err}`, color: "#ef4444" });
+      setStatus({ text: `Launch error: ${err}`, color: "error" });
     }
   }
 
   async function openFolder() {
     if (!selectedProject) return;
-    try {
-      await api.openFolder(selectedProject.path);
-    } catch (err) {
-      setStatus({ text: `Open folder error: ${err}`, color: "#ef4444" });
-    }
+    try { await api.openFolder(selectedProject.path); }
+    catch (err) { setStatus({ text: `Open folder error: ${err}`, color: "error" }); }
   }
 
   async function rescan(cfg: Config = config!) {
-    setStatus({ text: "Scanning…", color: "#F8C471" });
+    setStatus({ text: "Scanning…", color: "dim" });
     try {
       const list = await api.scanProjects(cfg.projectsDir);
       setProjects(list);
-      setStatus({ text: `Found ${list.length} projects`, color: "#4ECDC4" });
+      setStatus({ text: `Found ${list.length} projects`, color: "accent" });
     } catch (err) {
-      setStatus({ text: `Scan error: ${err}`, color: "#ef4444" });
+      setStatus({ text: `Scan error: ${err}`, color: "error" });
     }
   }
 
   async function pickFolder(): Promise<string | null> {
     try {
-      const result = await openDialog({
-        directory: true,
-        multiple: false,
-        title: "Pick your code folder",
-      });
-      if (typeof result === "string") return result;
-      return null;
-    } catch {
-      return null;
-    }
+      const result = await openDialog({ directory: true, multiple: false, title: "Pick your code folder" });
+      return typeof result === "string" ? result : null;
+    } catch { return null; }
   }
 
   async function saveSettings(next: Config) {
@@ -164,61 +140,54 @@ export default function App() {
   }
 
   return (
-    <main className="h-screen flex flex-col p-5 gap-3">
+    <main className="h-screen flex flex-col bg-bg">
       {/* Header */}
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
-          Claude Launcher
-        </h1>
-        <div className="flex gap-2">
-          <button
-            onClick={() => rescan()}
-            className="h-8 px-3 rounded-md text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-          >
-            Rescan
-          </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="h-8 px-3 rounded-md text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-            aria-label="Settings"
-          >
-            Settings
-          </button>
-          <button
-            onClick={() => setHelpOpen(true)}
-            className="h-8 w-8 rounded-md text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-            aria-label="Help"
-            title="Help"
-          >
-            ?
-          </button>
+      <header className="flex items-center justify-between px-5 py-3 border-b border-border">
+        <div className="flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-accent text-white">
+            C
+          </div>
+          <span className="text-sm font-semibold text-text">Claude Launcher</span>
+        </div>
+        <div className="flex gap-1.5">
+          {[
+            { label: "Rescan", action: () => rescan() },
+            { label: "Settings", action: () => setSettingsOpen(true) },
+            { label: "?", action: () => setHelpOpen(true), title: "Help" },
+          ].map((btn) => (
+            <button
+              key={btn.label}
+              onClick={btn.action}
+              title={btn.title}
+              className="h-7 px-3 rounded-lg text-xs font-medium bg-surface-2 text-muted border border-border hover:bg-surface-3 hover:text-text transition-colors"
+            >
+              {btn.label}
+            </button>
+          ))}
         </div>
       </header>
 
       {/* Search */}
-      <input
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        placeholder="Search projects…"
-        className="h-9 px-3 rounded-md bg-zinc-900 border border-zinc-700 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-blue-500"
-      />
+      <div className="px-5 py-3 border-b border-border">
+        <input
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="Search projects…"
+          className="w-full h-9 px-3 rounded-lg text-sm bg-surface border border-border text-text placeholder:text-dim focus:outline-none focus:border-accent transition-colors"
+        />
+      </div>
 
-      {/* Body: grid + side panel */}
-      <div className="flex-1 flex gap-4 min-h-0">
-        <section className="flex-1 flex flex-col min-w-0">
-          <div className="text-xs text-zinc-500 mb-2">
-            {loading
-              ? "Loading…"
-              : `${filtered.length} ${filtered.length === 1 ? "project" : "projects"}`}
+      {/* Body */}
+      <div className="flex-1 flex min-h-0">
+        <section className="flex-1 flex flex-col min-w-0 p-5 gap-3">
+          <div className="text-xs text-dim">
+            {loading ? "Loading…" : `${filtered.length} ${filtered.length === 1 ? "project" : "projects"}`}
           </div>
 
           {!loading && projects.length === 0 && config && (
-            <div className="rounded-md border border-amber-700/50 bg-amber-950/30 px-3 py-2 text-xs text-amber-200 mb-2">
+            <div className="rounded-lg px-3 py-2 text-xs mb-1 bg-accent/10 border border-accent/25 text-accent">
               No projects found in <code>{config.projectsDir}</code>.{" "}
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className="underline hover:text-amber-100 font-medium"
-              >
+              <button onClick={() => setSettingsOpen(true)} className="underline font-medium">
                 Pick a different folder
               </button>
               .
@@ -226,21 +195,14 @@ export default function App() {
           )}
 
           <div className="flex-1 overflow-y-auto pr-1">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
               {filtered.map((p, i) => (
-                <div
-                  key={p.path}
-                  className="card-enter"
-                  style={{ animationDelay: `${Math.min(i * 25, 600)}ms` }}
-                >
+                <div key={p.path} className="card-enter" style={{ animationDelay: `${Math.min(i * 20, 500)}ms` }}>
                   <ProjectCard
                     project={p}
                     selected={p.path === selected}
                     onSelect={() => selectProject(p)}
-                    onDoubleClick={() => {
-                      selectProject(p);
-                      setTimeout(launch, 0);
-                    }}
+                    onDoubleClick={() => { selectProject(p); setTimeout(launch, 0); }}
                   />
                 </div>
               ))}
@@ -248,24 +210,22 @@ export default function App() {
           </div>
         </section>
 
-        <SidePanel
-          project={selectedProject}
-          options={options}
-          onChangeOptions={setOptions}
-          onLaunch={launch}
-          onOpenFolder={openFolder}
-        />
+        <div className="border-l border-border">
+          <SidePanel
+            project={selectedProject}
+            options={options}
+            onChangeOptions={setOptions}
+            onLaunch={launch}
+            onOpenFolder={openFolder}
+          />
+        </div>
       </div>
 
       {/* Status bar */}
-      <footer
-        className="text-xs h-5 flex items-center"
-        style={{ color: status.color }}
-      >
+      <footer className={clsx("px-5 h-8 flex items-center text-xs border-t border-border", STATUS_CLS[status.color])}>
         {status.text}
       </footer>
 
-      {/* Modals */}
       {config && (
         <SettingsModal
           open={settingsOpen}
@@ -275,11 +235,7 @@ export default function App() {
           onPickFolder={pickFolder}
         />
       )}
-      <HelpModal
-        open={helpOpen}
-        onClose={() => setHelpOpen(false)}
-        configPath={configPath}
-      />
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} configPath={configPath} />
     </main>
   );
 }
