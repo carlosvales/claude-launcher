@@ -227,13 +227,29 @@ fn launch_claude(project_path: String, options: LaunchOptions) -> Result<(), Str
     #[cfg(target_os = "windows")]
     {
         let escaped = project_path.replace('/', "\\");
-        // Invoke `wt` directly so each arg is passed via CreateProcess and
-        // we don't have to wrestle with cmd /C quote escaping for paths that
-        // contain spaces. `cmd /k <cmd>` keeps the shell open after `claude` exits.
-        Command::new("wt")
+        // Try Windows Terminal first (best experience), then fall back to
+        // PowerShell or cmd.exe for systems where wt is not installed
+        // (Windows 10 without WT, Windows Server, enterprise lockdowns).
+        let launched = Command::new("wt")
             .args(["-d", &escaped, "cmd", "/k", &claude_cmd])
             .spawn()
-            .map_err(|e| format!("Failed to launch wt (is Windows Terminal installed?): {e}"))?;
+            .or_else(|_| {
+                let ps_script = format!(
+                    "Set-Location -LiteralPath '{}'; {}",
+                    escaped, claude_cmd
+                );
+                Command::new("powershell")
+                    .args(["-NoExit", "-Command", &ps_script])
+                    .spawn()
+            })
+            .or_else(|_| {
+                let cmd_line = format!("cd /d \"{}\" && {}", escaped, claude_cmd);
+                Command::new("cmd")
+                    .args(["/k", &cmd_line])
+                    .spawn()
+            })
+            .map_err(|e| format!("Failed to launch terminal: {e}"))?;
+        drop(launched);
     }
     #[cfg(target_os = "macos")]
     {
