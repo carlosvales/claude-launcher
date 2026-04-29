@@ -26,82 +26,74 @@ If you work on more than 2-3 projects with Claude Code, you've been here:
 - Re-typing the same `--continue --dangerously-skip-permissions --model opus --effort max` flags
 - Losing track of which project had a session active 3 days ago
 
-Claude Launcher reads your `~/.claude/projects/` directory, sorts your projects by last session time, and remembers per-project preferences (model, effort, session mode, voice, skip permissions). One double-click → Windows Terminal opens at the project root with `claude` running with your saved options.
+Claude Launcher reads your `~/.claude/projects/` directory, sorts your projects by last session time, and remembers per-project preferences (model, effort, session mode, voice, skip permissions). One double-click → your terminal opens at the project root with `claude` running with your saved options.
 
 ## Features
 
 - **Project grid** sorted by last Claude Code session, with a relative time badge per card (`today`, `2d ago`, `3w ago`)
 - **Per-project preferences** — model, effort, session mode, skip-permissions, voice — auto-restored on next click
 - **Live search** — filter the grid as you type
-- **Settings dialog** — native folder picker for `projects_dir`, defaults, optional AI backend toggles
+- **Settings dialog** — native folder picker for `projects_dir`, defaults
 - **Help / how-it-works dialog** — built-in explanation of every option, no need to dig through docs
 - **First-run onboarding** — opens Settings automatically when no projects are found
-- **Optional AI icons** — generate unique per-project icons via Stable Diffusion on your own GPU machine (see [`ai_backend/README.md`](ai_backend/README.md))
-- **Single config file** — `config.json`, no database, no telemetry
-- **Two flavors:**
-  - `launcher.py` (Python + customtkinter) — small, runs anywhere with Python 3.10+
-  - `tauri/` (Tauri 2 + React + Rust) — 9 MB standalone exe, GPU-accelerated UI, Settings/Help modals, smooth animations
+- **Single config file** — no database, no telemetry, ~9 MB installed
+- **Cross-platform terminal launch** — Windows Terminal / PowerShell / cmd.exe on Windows, Terminal.app on macOS, gnome-terminal / konsole / xterm on Linux
 
 ## Install
 
-### Tauri version (recommended for Windows)
+### Windows (recommended)
 
-Download the latest installer from [Releases](https://github.com/carlosvales/claude-launcher/releases) and run it.
+Download the latest installer from [Releases](https://github.com/carlosvales/claude-launcher/releases) and run it. Two formats are published:
 
-Alternatively, build from source:
+- `Claude.Launcher_<version>_x64-setup.exe` — NSIS installer, ~2 MB, recommended
+- `Claude.Launcher_<version>_x64_en-US.msi` — for silent / enterprise install
 
-```bash
-# Requires Rust 1.95+, Node 20+, and MSVC Build Tools (Windows) or Xcode (macOS)
-git clone https://github.com/carlosvales/claude-launcher
-cd claude-launcher/tauri
-npm install
-npm run tauri build
-```
+Windows SmartScreen will warn on first run because the installer is unsigned. Click **More info → Run anyway**.
 
-The binary lands in `tauri/src-tauri/target/release/claudelauncher.exe`.
+### Build from source
 
-### Python version
+Requires Rust 1.95+, Node 20.19+ (or 22+), and platform build tools (MSVC on Windows, Xcode CLT on macOS, `webkit2gtk` on Linux).
 
 ```bash
 git clone https://github.com/carlosvales/claude-launcher
 cd claude-launcher
-pip install -r requirements.txt
-python launcher.py
+npm install
+npm run tauri build
 ```
 
-On first run, the launcher creates `config.json` from `config.json.example`. Edit it and set `projects_dir` to your code folder.
+The binary lands in `src-tauri/target/release/bundle/`.
+
+For development with hot reload:
+
+```bash
+npm run tauri dev
+```
 
 ## Configuration
 
-The Tauri version stores its config in `%APPDATA%/claudelauncher/config.json` (Windows) or `~/.config/claudelauncher/config.json` (Linux/Mac). The Python version uses the local `config.json` next to `launcher.py`.
-
-Click **Settings** in the app to edit it through the UI. Or edit by hand:
+Config lives in `%APPDATA%/claudelauncher/config.json` (Windows) or `~/.config/claudelauncher/config.json` (Linux/Mac). Click **Settings** in the app to edit through the UI, or edit by hand:
 
 ```json
 {
-  "projects_dir": "~/Documents/Code",
-  "default_options": {
+  "projectsDir": "~/Documents/Code",
+  "defaultOptions": {
     "session": "continue",
-    "skip_perms": true,
+    "skipPerms": true,
     "voice": false,
     "model": "opus",
     "effort": "max"
-  },
-  "ai_backend": {
-    "enabled": false
   }
 }
 ```
 
 | Key | Description | Default |
 |---|---|---|
-| `projects_dir` | Folder scanned for project subfolders | `~/Documents/Code` |
-| `default_options.session` | `continue`, `new`, or `resume` | `continue` |
-| `default_options.skip_perms` | Pass `--dangerously-skip-permissions` | `true` |
-| `default_options.voice` | Voice mode flag (reserved) | `false` |
-| `default_options.model` | `opus`, `sonnet`, or `haiku` | `opus` |
-| `default_options.effort` | `low`, `medium`, `high`, or `max` | `max` |
-| `ai_backend.enabled` | Use a remote GPU for AI-generated icons | `false` |
+| `projectsDir` | Folder scanned for project subfolders | `~/Documents/Code` |
+| `defaultOptions.session` | `continue`, `new`, or `resume` | `continue` |
+| `defaultOptions.skipPerms` | Pass `--dangerously-skip-permissions` | `true` |
+| `defaultOptions.voice` | Voice mode flag (reserved) | `false` |
+| `defaultOptions.model` | `opus`, `sonnet`, or `haiku` | `opus` |
+| `defaultOptions.effort` | `low`, `medium`, `high`, or `max` | `max` |
 
 Per-project overrides are saved automatically under the `projects` key when you launch a project.
 
@@ -113,29 +105,20 @@ Per-project overrides are saved automatically under the `projects` key when you 
 | `Esc` | Deselect / close modal |
 | Double-click on card | Launch immediately |
 
-## AI icons (optional)
-
-By default, project icons are gradient-with-initials, deterministic per project name. They look fine.
-
-If you have a Linux + NVIDIA GPU machine on your network, you can generate unique AI icons via Stable Diffusion Turbo. See [`ai_backend/README.md`](ai_backend/README.md) for the setup.
-
 ## Tech
 
 - **Tauri 2** + **Rust 1.95** — desktop runtime, ~9 MB bundle
 - **React 19** + **TypeScript** + **Tailwind CSS v4** — UI
-- **Python 3.11** + **customtkinter** — alternative Python launcher
-- **Pillow** — icon rendering (fallback gradients)
-- **Stable Diffusion Turbo** via [`diffusers`](https://github.com/huggingface/diffusers) — optional AI icons on remote GPU
 
 ## Roadmap
 
-- [x] Python launcher (v0.1)
-- [x] Tauri 2 + React rewrite
+- [x] Tauri 2 + React UI
 - [x] Settings + Help dialogs
 - [x] Onboarding flow
-- [ ] macOS support (Tauri code is ready, needs `Terminal.app` validation)
-- [ ] Linux support (Tauri code is ready, needs `gnome-terminal` validation)
-- [ ] GitHub Actions release pipeline (Win + Mac + Linux installers)
+- [x] Windows release pipeline (GitHub Actions)
+- [x] Cross-platform terminal fallback chain (wt → PowerShell → cmd.exe; gnome-terminal → konsole → xterm)
+- [ ] macOS support (Tauri code is ready, needs `Terminal.app` validation + `.dmg` packaging)
+- [ ] Linux support (Tauri code is ready, needs terminal validation + `.deb` / `.AppImage` packaging)
 - [ ] Pinned projects
 - [ ] Per-project environment variables
 - [ ] Recent commands history per project
@@ -148,7 +131,6 @@ Especially helpful right now:
 
 - **macOS port** — validate `osascript` launch logic, package `.dmg`
 - **Linux port** — validate terminal fallbacks, package `.deb` and `.AppImage`
-- **GitHub Actions** — set up release matrix to build for the 3 OSes on tag push
 
 ## Support development
 

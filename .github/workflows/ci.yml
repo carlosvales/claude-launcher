@@ -10,16 +10,12 @@ jobs:
   frontend:
     name: Frontend (typecheck + tests)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: tauri
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: tauri/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Typecheck (tsc --noEmit)
@@ -32,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: tauri/src-tauri
+        working-directory: src-tauri
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -42,28 +38,8 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev libsoup-3.0-dev
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: tauri/src-tauri
+          workspaces: src-tauri
       - name: cargo check
         run: cargo check --all-targets
       - name: cargo test
         run: cargo test
-
-  python:
-    name: Python (compile + tests)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-      - name: Compile launcher.py
-        run: python -m py_compile launcher.py
-      - name: Compile auxiliary scripts
-        run: python -m py_compile scripts/generate_icons.py ai_backend/gen_icons_server.py
-      - name: Unit tests (pytest)
-        run: pytest tests/ -v

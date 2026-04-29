@@ -21,23 +21,11 @@ export interface LaunchOptions {
 
 export interface DefaultOptions extends LaunchOptions {}
 
-export interface AiBackend {
-  enabled: boolean;
-  ollamaUrl: string;
-  ollamaModel: string;
-  sshHost: string;
-  sshUser: string;
-  sshKeyPath: string;
-  remoteScriptPath: string;
-  remoteOutputDir: string;
-}
-
 export interface ProjectPrefs extends LaunchOptions {}
 
 export interface Config {
   projectsDir: string;
   defaultOptions: DefaultOptions;
-  aiBackend: AiBackend;
   lastProject: string;
   projects: Record<string, ProjectPrefs>;
 }

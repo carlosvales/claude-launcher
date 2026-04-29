@@ -35,7 +35,6 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: tauri/package-lock.json
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -45,7 +44,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: tauri/src-tauri
+          workspaces: src-tauri
 
       - name: Install Linux build dependencies
         if: matrix.platform == 'ubuntu-22.04'
@@ -54,20 +53,18 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev libsoup-3.0-dev
 
       - name: Install frontend dependencies
-        working-directory: tauri
         run: npm ci
 
       # Tag push skips ci.yml (which runs only on push-to-main and PRs), so we
       # re-run the test suites here on the release platform before building the
       # binary that end-users will install.
       - name: Frontend typecheck + tests
-        working-directory: tauri
         run: |
           npx tsc --noEmit
           npm test
 
       - name: Rust tests
-        working-directory: tauri/src-tauri
+        working-directory: src-tauri
         run: cargo test
 
       # Pinned to commit SHA of tauri-action v0.6.2 (released 2026-03-14).
@@ -88,7 +85,6 @@ jobs:
             See the [README](https://github.com/carlosvales/claude-launcher#install) for setup notes and configuration.
           releaseDraft: true
           prerelease: false
-          projectPath: ./tauri
           args: ${{ matrix.args }}
 
       - name: Build only (manual dispatch)
@@ -97,7 +93,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          projectPath: ./tauri
           args: ${{ matrix.args }}
 
       - name: Upload build artifacts (manual dispatch only)
@@ -106,10 +101,10 @@ jobs:
         with:
           name: claudelauncher-${{ matrix.platform }}
           path: |
-            tauri/src-tauri/target/release/bundle/**/*.msi
-            tauri/src-tauri/target/release/bundle/**/*.exe
-            tauri/src-tauri/target/release/bundle/**/*.dmg
-            tauri/src-tauri/target/release/bundle/**/*.AppImage
-            tauri/src-tauri/target/release/bundle/**/*.deb
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.dmg
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/*.deb
           retention-days: 7
           if-no-files-found: ignore
