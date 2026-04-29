@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal } from "./Modal";
 import { clsx } from "../utils";
-import type { AiBackend, Config, DefaultOptions, Effort, Model, SessionMode } from "../types";
+import type { Config, DefaultOptions, Effort, Model, SessionMode } from "../types";
 
 interface Props {
   open: boolean;
@@ -21,7 +21,6 @@ const EFFORTS: Effort[] = ["low", "medium", "high", "max"];
 
 export function SettingsModal({ open, onClose, config, onSave, onPickFolder }: Props) {
   const [draft, setDraft] = useState<Config>(config);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { setDraft(config); }, [config, open]);
@@ -33,10 +32,6 @@ export function SettingsModal({ open, onClose, config, onSave, onPickFolder }: P
 
   function patchDefaults<K extends keyof DefaultOptions>(key: K, value: DefaultOptions[K]) {
     setDraft({ ...draft, defaultOptions: { ...draft.defaultOptions, [key]: value } });
-  }
-
-  function patchAi<K extends keyof AiBackend>(key: K, value: AiBackend[K]) {
-    setDraft({ ...draft, aiBackend: { ...draft.aiBackend, [key]: value } });
   }
 
   async function save() {
@@ -89,43 +84,6 @@ export function SettingsModal({ open, onClose, config, onSave, onPickFolder }: P
             <ToggleRow label="Voice mode by default" checked={draft.defaultOptions.voice} onChange={(v) => patchDefaults("voice", v)} />
           </div>
         </Section>
-
-        <Section title="AI icons (optional)">
-          <p className="text-xs text-dim mb-3">
-            Generate unique icons via Stable Diffusion on a remote GPU machine.
-          </p>
-          <ToggleRow label="Enable AI-generated icons" checked={draft.aiBackend.enabled} onChange={(v) => patchAi("enabled", v)} />
-          {draft.aiBackend.enabled && (
-            <div className="mt-3 space-y-2 pl-4 border-l-2 border-border">
-              <Field label="Ollama URL" hint="e.g. http://gpu-host:11434">
-                <Input value={draft.aiBackend.ollamaUrl} onChange={(v) => patchAi("ollamaUrl", v)} />
-              </Field>
-              <Field label="Ollama model">
-                <Input value={draft.aiBackend.ollamaModel} onChange={(v) => patchAi("ollamaModel", v)} />
-              </Field>
-              <button
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="text-xs text-accent hover:text-accent-dark transition-colors"
-              >
-                {showAdvanced ? "Hide" : "Show"} SSH details
-              </button>
-              {showAdvanced && (
-                <div className="space-y-2 mt-1">
-                  {[
-                    { label: "SSH host", key: "sshHost" as keyof AiBackend, val: draft.aiBackend.sshHost },
-                    { label: "SSH user", key: "sshUser" as keyof AiBackend, val: draft.aiBackend.sshUser },
-                    { label: "SSH key path", key: "sshKeyPath" as keyof AiBackend, val: draft.aiBackend.sshKeyPath },
-                    { label: "Remote script path", key: "remoteScriptPath" as keyof AiBackend, val: draft.aiBackend.remoteScriptPath },
-                  ].map(({ label, key, val }) => (
-                    <Field key={key as string} label={label}>
-                      <Input value={val as string} onChange={(v) => patchAi(key, v as AiBackend[typeof key])} />
-                    </Field>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </Section>
       </div>
     </Modal>
   );
@@ -149,16 +107,6 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
       </div>
       {children}
     </label>
-  );
-}
-
-function Input({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full h-8 px-2 rounded-lg text-sm bg-bg border border-border text-text focus:outline-none focus:border-accent transition-colors"
-    />
   );
 }
 

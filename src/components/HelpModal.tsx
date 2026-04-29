@@ -58,15 +58,6 @@ export function HelpModal({ open, onClose, configPath }: Props) {
           </ul>
         </Section>
 
-        <Section title="AI icons (optional)">
-          <p>
-            By default, project icons are gradient-with-initials. If you have an NVIDIA GPU
-            machine running Stable Diffusion, configure it in{" "}
-            <b className="text-text">Settings → AI icons</b> to generate unique icons per project.
-            Disable the toggle to use fast gradient fallbacks instead.
-          </p>
-        </Section>
-
         <Section title="Config file">
           <p className="break-all"><Code>{configPath || "(loading…)"}</Code></p>
           <p className="mt-1">

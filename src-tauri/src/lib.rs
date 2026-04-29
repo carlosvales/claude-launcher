@@ -52,19 +52,6 @@ pub struct DefaultOptions {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct AiBackend {
-    enabled: bool,
-    ollama_url: String,
-    ollama_model: String,
-    ssh_host: String,
-    ssh_user: String,
-    ssh_key_path: String,
-    remote_script_path: String,
-    remote_output_dir: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct ProjectPrefs {
     session: String,
     skip_perms: bool,
@@ -78,7 +65,6 @@ pub struct ProjectPrefs {
 pub struct Config {
     projects_dir: String,
     default_options: DefaultOptions,
-    ai_backend: AiBackend,
     last_project: String,
     projects: serde_json::Map<String, serde_json::Value>,
 }
@@ -121,16 +107,6 @@ fn default_config() -> Config {
             voice: false,
             model: "opus".into(),
             effort: "max".into(),
-        },
-        ai_backend: AiBackend {
-            enabled: false,
-            ollama_url: "http://localhost:11434".into(),
-            ollama_model: "gemma3:4b".into(),
-            ssh_host: String::new(),
-            ssh_user: String::new(),
-            ssh_key_path: String::new(),
-            remote_script_path: "/tmp/gen_icons_server.py".into(),
-            remote_output_dir: "/tmp/claude-icons".into(),
         },
         last_project: String::new(),
         projects: serde_json::Map::new(),
@@ -407,7 +383,6 @@ mod tests {
         assert_eq!(cfg.default_options.model, "opus");
         assert_eq!(cfg.default_options.effort, "max");
         assert!(cfg.default_options.skip_perms);
-        assert!(!cfg.ai_backend.enabled);
         assert!(cfg.last_project.is_empty());
         assert!(cfg.projects.is_empty());
     }

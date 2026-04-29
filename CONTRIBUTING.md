@@ -22,8 +22,6 @@ For non-trivial changes, please open the issue first and wait for a reaction bef
 
 ## Development setup
 
-### Tauri (recommended)
-
 Requires:
 
 - Rust 1.95+ (`rustup install stable`)
@@ -34,18 +32,9 @@ Requires:
 
 ```bash
 git clone https://github.com/carlosvales/claude-launcher
-cd claude-launcher/tauri
+cd claude-launcher
 npm install
 npm run tauri dev    # Hot reload for both React and Rust
-```
-
-### Python
-
-```bash
-git clone https://github.com/carlosvales/claude-launcher
-cd claude-launcher
-pip install -r requirements.txt
-python launcher.py
 ```
 
 ## Pull request workflow
@@ -56,9 +45,10 @@ python launcher.py
    ```
 2. Make focused changes. Keep unrelated cleanup in separate PRs.
 3. Make sure these all pass:
-   - `cd tauri && npx tsc --noEmit` (TypeScript)
-   - `cd tauri/src-tauri && cargo check` (Rust)
-   - `python -m py_compile launcher.py` (Python)
+   - `npx tsc --noEmit` (TypeScript)
+   - `npm test` (Vitest)
+   - `cd src-tauri && cargo check` (Rust)
+   - `cd src-tauri && cargo test` (Rust tests)
 4. Commit with [Conventional Commits](https://www.conventionalcommits.org/):
    - `feat:` — new feature
    - `fix:` — bug fix
@@ -88,11 +78,10 @@ python launcher.py
 
 - Rust: `cargo fmt` defaults
 - TypeScript/React: keep components functional, hooks at the top, prefer Tailwind utility classes over CSS modules
-- Python: PEP 8, type hints when the function is non-trivial
 
 ## Releasing (maintainer notes)
 
-Releases are tagged with `v<MAJOR>.<MINOR>.<PATCH>` and published via GitHub Releases. CI (when wired up) builds installers for Windows, macOS, and Linux on tag push and attaches them to the release.
+Releases are tagged with `v<MAJOR>.<MINOR>.<PATCH>` and published via GitHub Releases. The `release.yml` workflow builds the Windows installer on tag push and attaches it as a draft release for review before publishing.
 
 ## Questions?
 
