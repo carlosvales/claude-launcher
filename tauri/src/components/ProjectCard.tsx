@@ -18,32 +18,23 @@ export function ProjectCard({ project, selected, onSelect, onDoubleClick }: Prop
       onDoubleClick={onDoubleClick}
       title={project.path}
       className={clsx(
-        "group flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl border w-full",
-        "bg-zinc-900 hover:bg-zinc-800/80 transition-all duration-150",
-        "active:scale-[0.98]",
+        "group flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl w-full border transition-all duration-150 active:scale-[0.97]",
         selected
-          ? "border-blue-500 ring-2 ring-blue-500/20 bg-zinc-800/80"
-          : "border-zinc-800 hover:border-zinc-700",
+          ? "bg-surface-3 border-accent shadow-[0_0_0_2px_rgba(218,119,86,0.15)]"
+          : "bg-surface border-border hover:bg-surface-2",
       )}
     >
       <div
-        className={clsx(
-          "w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-white text-base shadow-lg",
-          "transition-transform duration-150 group-hover:scale-105",
-        )}
-        style={{
-          background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)`,
-        }}
+        className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-white text-sm shadow-md transition-transform duration-150 group-hover:scale-105"
+        style={{ background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)` }}
       >
         {initials(project.name)}
       </div>
-      <div className="text-[13px] font-semibold text-zinc-100 truncate max-w-full">
+      <div className="text-[13px] font-medium text-text truncate max-w-full">
         {display}
       </div>
-      <div
-        className="text-[11px] tabular-nums font-medium"
-        style={{ color: project.lastSessionColor }}
-      >
+      {/* lastSessionColor is dynamic data from the backend, inline style is intentional */}
+      <div className="text-[11px] font-medium tabular-nums" style={{ color: project.lastSessionColor }}>
         {project.lastSessionLabel}
       </div>
     </button>

@@ -1,24 +1,24 @@
 const FALLBACK_COLORS = [
-  ["#FF6B6B", "#A82B2B"],
-  ["#4ECDC4", "#1F7873"],
-  ["#45B7D1", "#1B6987"],
-  ["#96CEB4", "#3F8763"],
-  ["#6C5CE7", "#322598"],
-  ["#DDA0DD", "#7E4F7E"],
-  ["#00B894", "#005641"],
-  ["#F7DC6F", "#A88A1B"],
-  ["#BB8FCE", "#683B7F"],
-  ["#0984E3", "#04477A"],
-  ["#F8C471", "#A8721B"],
-  ["#00CEC9", "#006C69"],
-  ["#E17055", "#7C2C16"],
-  ["#74B9FF", "#1E5FA8"],
-  ["#A29BFE", "#4B45A1"],
-  ["#55EFC4", "#208E68"],
-  ["#FAD7A0", "#A8761F"],
-  ["#81ECEC", "#287D7D"],
-  ["#FD79A8", "#9B1F4D"],
-  ["#636E72", "#2D3437"],
+  ["#da7756", "#a84a2a"],  // Claude orange
+  ["#c4956a", "#8a5530"],  // Terracotta
+  ["#b57a55", "#7a4525"],  // Burnt sienna
+  ["#c4a455", "#8a6a25"],  // Warm gold
+  ["#8b7355", "#5a4530"],  // Warm brown
+  ["#9b8a7a", "#6a5545"],  // Taupe
+  ["#6b8f71", "#3d5c42"],  // Muted sage
+  ["#7aab8f", "#3d7a5c"],  // Muted teal
+  ["#8f9b7a", "#5a6a45"],  // Olive
+  ["#7aab9b", "#3d7868"],  // Seafoam
+  ["#8b6fa0", "#5a4070"],  // Warm mauve
+  ["#9b7fa8", "#6a4a78"],  // Soft purple
+  ["#8f7aaa", "#5a4578"],  // Lavender
+  ["#b57878", "#7a4545"],  // Muted rose
+  ["#b57a8f", "#7a4560"],  // Dusty rose
+  ["#aa7878", "#7a4545"],  // Clay
+  ["#7a9ab5", "#4a6a85"],  // Warm blue-gray
+  ["#7888b5", "#4a5585"],  // Periwinkle
+  ["#7a8a9b", "#4a5a6b"],  // Slate
+  ["#c49b7a", "#8a6040"],  // Sand
 ];
 
 function hash(str: string): number {
