@@ -1,0 +1,115 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: ''
+          # macOS and Linux are disabled until a contributor validates them.
+          # To enable a port:
+          #   1. Uncomment the matching include entry below.
+          #   2. For macOS, the "Add macOS Rust targets" step installs the
+          #      universal targets automatically.
+          #   3. For Linux, the apt-get step installs gtk/webkit deps.
+          # - platform: macos-latest
+          #   args: '--target universal-apple-darwin'
+          # - platform: ubuntu-22.04
+          #   args: ''
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tauri/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Add macOS Rust targets
+        if: matrix.platform == 'macos-latest'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri/src-tauri
+
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev libsoup-3.0-dev
+
+      - name: Install frontend dependencies
+        working-directory: tauri
+        run: npm ci
+
+      # Tag push skips ci.yml (which runs only on push-to-main and PRs), so we
+      # re-run the test suites here on the release platform before building the
+      # binary that end-users will install.
+      - name: Frontend typecheck + tests
+        working-directory: tauri
+        run: |
+          npx tsc --noEmit
+          npm test
+
+      - name: Rust tests
+        working-directory: tauri/src-tauri
+        run: cargo test
+
+      # Pinned to commit SHA of tauri-action v0.6.2 (released 2026-03-14).
+      # tauri-action receives GITHUB_TOKEN and produces the binary that ships
+      # to users, so it gets stricter supply-chain handling than the other
+      # actions in this workflow. Bump the SHA when upgrading.
+      - name: Build & release (tag push)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Claude Launcher ${{ github.ref_name }}'
+          releaseBody: |
+            Download the installer for your platform below.
+
+            See the [README](https://github.com/carlosvales/claude-launcher#install) for setup notes and configuration.
+          releaseDraft: true
+          prerelease: false
+          projectPath: ./tauri
+          args: ${{ matrix.args }}
+
+      - name: Build only (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: ./tauri
+          args: ${{ matrix.args }}
+
+      - name: Upload build artifacts (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: claudelauncher-${{ matrix.platform }}
+          path: |
+            tauri/src-tauri/target/release/bundle/**/*.msi
+            tauri/src-tauri/target/release/bundle/**/*.exe
+            tauri/src-tauri/target/release/bundle/**/*.dmg
+            tauri/src-tauri/target/release/bundle/**/*.AppImage
+            tauri/src-tauri/target/release/bundle/**/*.deb
+          retention-days: 7
+          if-no-files-found: ignore
