@@ -36,7 +36,7 @@ export function SidePanel({ project, options, onChangeOptions, onLaunch, onOpenF
   }
 
   return (
-    <aside className="w-68 flex flex-col p-4 h-full bg-surface" style={{ width: 272 }}>
+    <aside className="w-[272px] flex flex-col p-4 h-full bg-surface">
       <div className="pb-3">
         <h3 className="text-sm font-semibold text-text truncate leading-snug">
           {project ? project.name : "No project selected"}
@@ -114,7 +114,7 @@ export function SidePanel({ project, options, onChangeOptions, onLaunch, onOpenF
               : "bg-surface-2 text-muted hover:bg-surface-3 hover:text-text cursor-pointer",
           )}
         >
-          Reveal in Finder
+          Open folder
         </button>
       </div>
     </aside>
