@@ -1,0 +1,53 @@
+# User config (contains personal paths and credentials)
+config.json
+
+# Generated icons cache (Python launcher root only — Tauri's tauri/src-tauri/icons/ IS committed)
+/icons/
+
+# Personal scripts not part of the launcher
+gen_image_v2.py
+generar_imagen.bat
+prompts.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# Tauri / Rust
+src-tauri/target/
+target/
+**/*.rs.bk
+# Cargo.lock IS committed — this is an application, not a library
+
+# Node / Vite
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build output
+build/
+*.exe
+*.msi
+*.dmg
+*.deb
+*.AppImage
